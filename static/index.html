@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secret Notes Pro 🔐</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+        }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg);
+            color: var(--text);
+            max-width: 600px; 
+            margin: 0 auto; 
+            padding: 40px 20px; 
+            line-height: 1.5; 
+        }
+        .card {
+            background: var(--card);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        h1 { margin-top: 0; font-size: 24px; text-align: center; }
+        
+        .field-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
+        
+        textarea, input[type="text"], input[type="password"], input[type="number"] { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 6px; 
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        textarea { height: 120px; resize: vertical; }
+        
+        button { 
+            width: 100%;
+            padding: 12px; 
+            cursor: pointer; 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            font-size: 16px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        button:hover { background: var(--primary-hover); }
+
+        .note-box { 
+            border-left: 4px solid var(--primary); 
+            padding: 20px; 
+            background: #f1f5f9; 
+            word-break: break-all; 
+            white-space: pre-wrap;
+            margin: 20px 0;
+        }
+        .hidden { display: none; }
+        .warning { color: #dc2626; font-size: 14px; font-weight: 600; margin-top: 10px; }
+        .success-link { background: #ecfdf5; border: 1px solid #10b981; color: #065f46; padding: 10px; border-radius: 6px; word-break: break-all; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1>🔐 Secret Notes</h1>
+        
+        <!-- Форма создания -->
+        <div id="create-area">
+            <div class="field-group">
+                <label>Ваше секретное сообщение:</label>
+                <textarea id="note-content" placeholder="Пароли, ключи или признания..."></textarea>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <div class="field-group" style="flex: 1;">
+                    <label>Лимит просмотров:</label>
+                    <input type="number" id="max-views" value="1" min="1">
+                </div>
+                <div class="field-group" style="flex: 2;">
+                    <label>Пароль (опционально):</label>
+                    <input type="password" id="note-password" placeholder="Оставьте пустым, если не нужен">
+                </div>
+            </div>
+            
+            <button onclick="createNote()">Создать секретную ссылку</button>
+        </div>
+
+        <!-- Результат создания -->
+        <div id="result-area" class="hidden">
+            <p>✅ Ссылка создана! Скопируйте её:</p>
+            <div id="note-link" class="success-link"></div>
+            <p style="font-size: 12px; color: #64748b;">Запишите её, после закрытия страницы она будет недоступна.</p>
+            <button onclick="location.reload()" style="background: #64748b; margin-top: 20px;">Создать новую заметку</button>
+        </div>
+
+        <!-- Просмотр заметки -->
+        <div id="view-area" class="hidden">
+            <h3>Содержимое секретной заметки:</h3>
+            <div id="display-content" class="note-box"></div>
+            <p class="warning">⚠️ Внимание: счетчик просмотров уменьшен. После исчерпания лимита заметка удалится навсегда.</p>
+            <button onclick="window.location.href='/'" style="background: #64748b; margin-top: 20px;">На главную</button>
+        </div>
+    </div>
+
+    <script>
+        const apiBase = '/api/notes/';
+
+        // Логика инициализации страницы
+        const urlParams = new URLSearchParams(window.location.search);
+        const noteId = urlParams.get('id');
+
+        if (noteId) {
+            loadNote(noteId);
+        }
+
+        async function createNote() {
+            const content = document.getElementById('note-content').value;
+            const max_views = document.getElementById('max-views').value;
+            const password = document.getElementById('note-password').value;
+
+            if (!content) {
+                alert("Пожалуйста, введите текст сообщения");
+                return;
+            }
+
+            try {
+                const response = await fetch(apiBase, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content, max_views, password })
+                });
+
+                if (!response.ok) throw new Error("Ошибка при создании");
+
+                const data = await response.json();
+                
+                document.getElementById('create-area').classList.add('hidden');
+                document.getElementById('result-area').classList.remove('hidden');
+                document.getElementById('note-link').innerText = window.location.origin + '/?id=' + data.id;
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        async function loadNote(id) {
+            const getNote = async (pass = null) => {
+                const url = pass ? `${apiBase}${id}/?password=${encodeURIComponent(pass)}` : `${apiBase}${id}/`;
+                return await fetch(url);
+            };
+
+            let response = await getNote();
+
+            // Если требуется пароль
+            if (response.status === 403) {
+                const password = prompt("Эта заметка защищена паролем. Введите его:");
+                if (password === null) {
+                    window.location.href = '/';
+                    return;
+                }
+                response = await getNote(password);
+            }
+
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('create-area').classList.add('hidden');
+                document.getElementById('view-area').classList.remove('hidden');
+                document.getElementById('display-content').innerText = data.content;
+            } else {
+                const errorData = await response.json();
+                alert(errorData.detail || "Заметка не найдена или уже удалена.");
+                window.location.href = '/';
+            }
+        }
+    </script>
+</body>
+</html>
