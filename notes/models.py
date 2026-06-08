@@ -1,6 +1,8 @@
 import uuid
+
+from django.contrib.auth.hashers import check_password, make_password
 from django.db import models
-from django.contrib.auth.hashers import make_password, check_password
+
 
 class Note(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

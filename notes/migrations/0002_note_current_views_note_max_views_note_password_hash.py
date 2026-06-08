@@ -4,25 +4,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('notes', '0001_initial'),
+        ("notes", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='note',
-            name='current_views',
+            model_name="note",
+            name="current_views",
             field=models.PositiveIntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='note',
-            name='max_views',
+            model_name="note",
+            name="max_views",
             field=models.PositiveIntegerField(default=1),
         ),
         migrations.AddField(
-            model_name='note',
-            name='password_hash',
+            model_name="note",
+            name="password_hash",
             field=models.CharField(blank=True, max_length=128, null=True),
         ),
     ]
