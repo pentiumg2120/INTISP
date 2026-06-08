@@ -1,14 +1,52 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
 
 jobs:
+  # ── Линтер + форматтер ──────────────────────────────────────────
   lint:
-    name: Lint & Type Check
+    name: Lint & Format (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ruff
+        run: pip install ruff==0.15.2
+
+      - name: Run ruff linter
+        run: ruff check .
+
+      - name: Run ruff formatter check
+        run: ruff format --check .
+
+  # ── Проверка типов ──────────────────────────────────────────────
+  types:
+    name: Type Check (pyrefly)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyrefly==1.0.0
+
+      - name: Run pyrefly check
+        run: pyrefly check
+
+  # ── Миграции Django ─────────────────────────────────────────────
+  migrations:
+    name: Django Migrations Check
     runs-on: ubuntu-latest
 
     services:
@@ -29,35 +67,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
+        run: pip install -r requirements.txt
 
       - name: Set up environment
         run: cp .env.example .env
 
-      - name: Check Django migrations
+      - name: Check for missing migrations
         run: python manage.py makemigrations --check --dry-run
 
-      - name: Run ruff
-        run: ruff check .
-
+  # ── Аудит безопасности зависимостей ─────────────────────────────
   audit:
-    name: Security Audit
+    name: Security Audit (pip-audit)
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 

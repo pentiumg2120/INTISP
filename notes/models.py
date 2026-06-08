@@ -14,7 +14,7 @@ class Note(models.Model):
 
     def set_password(self, password):
         if password:
-            self.password_hash = make_password(password)
+            self.password_hash = make_password(password)  # pyrefly: ignore
 
     def check_note_password(self, password):
         if not self.password_hash:

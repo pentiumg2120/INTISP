@@ -6,7 +6,7 @@ from .serializers import NoteSerializer
 
 
 class NoteViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
-    queryset = Note.objects.all()
+    queryset = Note.objects.all()  # pyrefly: ignore
     serializer_class = NoteSerializer
 
     def retrieve(self, request, *args, **kwargs):

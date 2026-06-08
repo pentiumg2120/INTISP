@@ -20,3 +20,9 @@ indent-style = "space"
 
 [tool.ruff.lint.isort]
 known-first-party = ["core", "notes"]
+
+[tool.pyrefly]
+project-includes = [
+    "**/*.py*",
+    "**/*.ipynb",
+]

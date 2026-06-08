@@ -13,7 +13,7 @@ class NoteSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         password = validated_data.pop("password", None)
-        note = Note.objects.create(**validated_data)
+        note = Note.objects.create(**validated_data)  # pyrefly: ignore
         if password:
             note.set_password(password)
             note.save()
