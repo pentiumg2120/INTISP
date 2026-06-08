@@ -29,10 +29,26 @@ python manage.py runserver
 
 ---
 
+### 🐘 База данных
+
+Проект использует PostgreSQL 16 в Docker-контейнере. Конфигурация подключения — через переменную `DATABASE_URL` в `.env` (копируется из `.env.example` при первом запуске `setup.sh`).
+
+Управление контейнером вручную:
+
+```bash
+docker compose up -d db       # Запустить PostgreSQL
+docker compose down           # Остановить и удалить контейнер
+docker compose down -v        # Удалить контейнер и том с данными
+```
+
+---
+
 ### 📂 Структура проекта
 - `core/` — настройки проекта Django.
 - `notes/` — логика API (Models, ViewSets, Serializers).
 - `static/` — фронтенд (HTML/JS).
+- `docker-compose.yml` — контейнер PostgreSQL.
+- `.env.example` — пример переменных окружения.
 - `setup.sh` — скрипт автоматизации развертывания.
 - `requirements.txt` — список зависимостей.
 
