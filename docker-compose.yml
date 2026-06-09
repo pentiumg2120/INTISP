@@ -1,17 +1,44 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16-alpine
-    container_name: intisp-postgres
+    container_name: intisp-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: intisp
-    ports:
-      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d intisp"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - intisp-net
+
+  web:
+    build: .
+    container_name: intisp-web
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - intisp-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+networks:
+  intisp-net:
+    driver: bridge
 
 volumes:
   pgdata:
