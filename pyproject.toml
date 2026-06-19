@@ -26,3 +26,8 @@ project-includes = [
     "**/*.py*",
     "**/*.ipynb",
 ]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "core.settings"
+addopts = "-v --tb=short --cov=notes --cov-report=term-missing"
+testpaths = ["notes"]

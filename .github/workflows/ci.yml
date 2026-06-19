@@ -80,6 +80,31 @@ jobs:
       - name: Check for missing migrations
         run: python manage.py makemigrations --check --dry-run
 
+  # ── Тесты ───────────────────────────────────────────────────────
+  tests:
+    name: Tests (pytest + coverage)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Set up environment
+        run: cp .env.example .env
+
+      - name: Run tests with coverage
+        env:
+          DATABASE_URL: "sqlite://:memory:"
+        run: python -m pytest
+
   # ── Аудит безопасности зависимостей ─────────────────────────────
   audit:
     name: Security Audit (pip-audit)
