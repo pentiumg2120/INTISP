@@ -1,6 +1,8 @@
 import uuid
+
+from django.contrib.auth.hashers import check_password, make_password
 from django.db import models
-from django.contrib.auth.hashers import make_password, check_password
+
 
 class Note(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -12,7 +14,7 @@ class Note(models.Model):
 
     def set_password(self, password):
         if password:
-            self.password_hash = make_password(password)
+            self.password_hash = make_password(password)  # pyrefly: ignore
 
     def check_note_password(self, password):
         if not self.password_hash:
