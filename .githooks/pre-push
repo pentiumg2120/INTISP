@@ -1,0 +1,44 @@
+#!/bin/bash
+# Pre-push hook — runs linters and tests before pushing.
+# Skip with: git push --no-verify
+
+set -e
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+echo -e "${GREEN}╔══════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║   Pre-push: lint → types → tests        ║${NC}"
+echo -e "${GREEN}╚══════════════════════════════════════════╝${NC}"
+
+# ── Ruff ─────────────────────────────────────────────────────────────
+echo ""
+echo "━━━ ruff check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+ruff check . || { echo -e "${RED}✗ ruff failed${NC}"; exit 1; }
+echo -e "${GREEN}✓ ruff check passed${NC}"
+
+echo ""
+echo "━━━ ruff format --check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+ruff format --check . || { echo -e "${RED}✗ ruff format failed${NC}"; exit 1; }
+echo -e "${GREEN}✓ ruff format passed${NC}"
+
+# ── Pyrefly ──────────────────────────────────────────────────────────
+echo ""
+echo "━━━ pyrefly check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+pyrefly check || { echo -e "${RED}✗ pyrefly failed${NC}"; exit 1; }
+echo -e "${GREEN}✓ pyrefly passed${NC}"
+
+# ── Pytest ───────────────────────────────────────────────────────────
+echo ""
+echo "━━━ pytest ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+DATABASE_URL="sqlite://:memory:" python -m pytest -q || {
+    echo -e "${RED}✗ tests failed${NC}"
+    exit 1
+}
+echo -e "${GREEN}✓ tests passed${NC}"
+
+echo ""
+echo -e "${GREEN}══════════════════════════════════════════${NC}"
+echo -e "${GREEN}  All checks passed — pushing.${NC}"
+echo -e "${GREEN}══════════════════════════════════════════${NC}"

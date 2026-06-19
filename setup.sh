@@ -13,6 +13,12 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
+# 1.5. Настройка Git-хуков
+if [ -d ".githooks" ]; then
+    echo "🪝 Настройка Git-хуков..."
+    git config core.hooksPath .githooks
+fi
+
 # 2. Проверка Docker (для PostgreSQL)
 if ! command -v docker &> /dev/null; then
     echo "❌ Ошибка: Docker не установлен. Установите Docker для запуска PostgreSQL."

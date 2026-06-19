@@ -12,9 +12,7 @@ class TestNoteAPI(APITestCase):
 
     def _create(self, content, **kwargs):
         """Helper to create a note and return the response."""
-        return self.client.post(
-            self.BASE, {"content": content, **kwargs}, format="json"
-        )
+        return self.client.post(self.BASE, {"content": content, **kwargs}, format="json")
 
     # ── Happy path ────────────────────────────────────────────────────
 
