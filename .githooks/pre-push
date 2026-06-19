@@ -9,7 +9,7 @@ GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
 echo -e "${GREEN}╔══════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║   Pre-push: lint → types → tests        ║${NC}"
+echo -e "${GREEN}║  Pre-push: lint → types → security → tests  ║${NC}"
 echo -e "${GREEN}╚══════════════════════════════════════════╝${NC}"
 
 # ── Ruff ─────────────────────────────────────────────────────────────
@@ -28,6 +28,15 @@ echo ""
 echo "━━━ pyrefly check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 pyrefly check || { echo -e "${RED}✗ pyrefly failed${NC}"; exit 1; }
 echo -e "${GREEN}✓ pyrefly passed${NC}"
+
+# ── Bandit ─────────────────────────────────────────────────────────────
+echo ""
+echo "━━━ bandit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+bandit -r notes/ -x notes/tests/ -f screen || {
+    echo -e "${RED}✗ bandit found security issues${NC}"
+    exit 1
+}
+echo -e "${GREEN}✓ bandit passed${NC}"
 
 # ── Pytest ───────────────────────────────────────────────────────────
 echo ""
