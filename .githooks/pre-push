@@ -1,0 +1,70 @@
+#!/bin/bash
+# Pre-push hook — lint → types → security → vuln-scan → tests
+# Skip with: git push --no-verify
+
+set -e
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m'
+
+echo ""
+echo -e "${GREEN}╔════════════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║  Pre-push: lint → types → security → sbom → tests  ║${NC}"
+echo -e "${GREEN}╚════════════════════════════════════════════════════╝${NC}"
+
+# ── Ruff ─────────────────────────────────────────────────────────────
+echo ""
+echo "━━━ ruff check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+ruff check .
+echo -e "${GREEN}✓ ruff check passed${NC}"
+
+echo ""
+echo "━━━ ruff format --check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+ruff format --check .
+echo -e "${GREEN}✓ ruff format passed${NC}"
+
+# ── Pyrefly ──────────────────────────────────────────────────────────
+echo ""
+echo "━━━ pyrefly check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+pyrefly check
+echo -e "${GREEN}✓ pyrefly passed${NC}"
+
+# ── Bandit ───────────────────────────────────────────────────────────
+echo ""
+echo "━━━ bandit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+bandit -r notes/ -x notes/tests/ -f screen -ll
+echo -e "${GREEN}✓ bandit passed${NC}"
+
+# ── Trivy ────────────────────────────────────────────────────────────
+echo ""
+echo "━━━ trivy ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+if command -v trivy &>/dev/null; then
+    trivy fs --scanners vuln --severity HIGH,CRITICAL .
+    echo -e "${GREEN}✓ trivy passed${NC}"
+else
+    echo -e "${YELLOW}⚠ trivy not installed — skipping${NC}"
+    echo "  Install: curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh"
+fi
+
+# ── Pytest ───────────────────────────────────────────────────────────
+echo ""
+echo "━━━ pytest ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+set +e
+DATABASE_URL="sqlite://:memory:" python -m pytest -q
+PYTEST_EXIT=$?
+set -e
+if [ $PYTEST_EXIT -eq 0 ]; then
+    echo -e "${GREEN}✓ pytest passed${NC}"
+elif [ $PYTEST_EXIT -eq 5 ]; then
+    echo -e "${YELLOW}⚠ no tests collected — skipping${NC}"
+else
+    echo -e "${RED}✗ pytest failed (exit $PYTEST_EXIT)${NC}"
+    exit 1
+fi
+
+echo ""
+echo -e "${GREEN}════════════════════════════════════════════════════${NC}"
+echo -e "${GREEN}  All checks passed — pushing.${NC}"
+echo -e "${GREEN}════════════════════════════════════════════════════${NC}"
